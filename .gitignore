@@ -1,0 +1,25 @@
+# 机密
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 数据产物（可由脚本重建）
+data/chroma_db/
+data/*.tmp
+*.log
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# 嵌套的就业聚合站（含身份证等敏感，独立仓库管理）
+assets/
+
+# 大文件与运行产物
+data/raw_*.json
+data/*.tmp
+refs/careerpilot/
