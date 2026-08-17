@@ -1,0 +1,177 @@
+{
+  "note": "三档判定的真实案例证据库（2026 年在招，来自调研抓取，用于推荐理由佐证，不臆造）。source=数据来源，url=可验证链接。",
+  "jump_chong_examples": [
+    {
+      "company": "字节跳动",
+      "title": "内容策略运营实习生-抖音UGC",
+      "city": "北京",
+      "salary": "350元/天",
+      "jd_key": "内容定性定量评估、UGC内容生态、大模型资源推动策略创新",
+      "source": "实习僧",
+      "url": "https://www.shixiseng.com/intern/inn_n4mt5umsvz2t"
+    },
+    {
+      "company": "字节跳动",
+      "title": "AIGC生态内容运营-抖音增长",
+      "city": "上海",
+      "salary": "面议",
+      "jd_key": "AIGC 生态内容运营",
+      "source": "实习僧",
+      "url": "https://www.shixiseng.com/intern/inn_d9mxqwub50et"
+    },
+    {
+      "company": "字节跳动",
+      "title": "内容生态策略运营（大模型方向）实习生-抖音生态",
+      "city": "北京",
+      "salary": "面议",
+      "jd_key": "大模型方向内容生态策略",
+      "source": "实习僧",
+      "url": "https://www.shixiseng.com/intern/inn_luairdvi2nkj"
+    },
+    {
+      "company": "腾讯",
+      "title": "AIGC内容创作导演",
+      "city": "深圳",
+      "salary": "面议",
+      "jd_key": "IEG/内容，腾讯官方 API 验证在招",
+      "source": "腾讯官方",
+      "url": "https://careers.tencent.com/"
+    },
+    {
+      "company": "网易",
+      "title": "内容运营（AI内容策划方向）",
+      "city": "北京",
+      "salary": "100-120元/天",
+      "jd_key": "AI内容策划方向",
+      "source": "实习僧",
+      "url": "https://www.shixiseng.com/intern/inn_d0e6tfkt8adn"
+    },
+    {
+      "company": "网易",
+      "title": "内容运营实习生（二次元、AIGC内容方向）",
+      "city": "北京",
+      "salary": "面议",
+      "jd_key": "AIGC 内容方向",
+      "source": "实习僧",
+      "url": "https://www.shixiseng.com/intern/inn_if3gab4clm0v"
+    },
+    {
+      "company": "小红书",
+      "title": "热点运营实习生（内容运营方向）",
+      "city": "北京",
+      "salary": "150-200元/天",
+      "jd_key": "关注AI行业前沿动态，具备AI工具应用经验者加分",
+      "source": "实习僧",
+      "url": "https://www.shixiseng.com/intern/inn_sn4h4ypjpcgk"
+    }
+  ],
+  "jump_wen_examples": [
+    {
+      "company": "爱奇艺",
+      "title": "AI内容运营实习",
+      "city": "上海",
+      "salary": "面议",
+      "jd_key": "AI 内容运营",
+      "source": "实习僧",
+      "url": "https://www.shixiseng.com/intern/inn_9abqwxpycpr2"
+    },
+    {
+      "company": "喜马拉雅",
+      "title": "AI内容制作实习",
+      "city": "上海",
+      "salary": "面议",
+      "jd_key": "音频+AIGC 内容制作",
+      "source": "实习僧",
+      "url": "https://www.shixiseng.com/intern/inn_jya59d0gyjo2"
+    },
+    {
+      "company": "芒果TV",
+      "title": "AI内容制作实习",
+      "city": "长沙",
+      "salary": "面议",
+      "jd_key": "综艺/剧集内容制作 AI 化",
+      "source": "实习僧",
+      "url": "https://www.shixiseng.com/intern/inn_s7pl3khwtwpk"
+    },
+    {
+      "company": "快手",
+      "title": "内容运营实习生（剧情内容）",
+      "city": "北京",
+      "salary": "180-200元/天",
+      "jd_key": "主站剧情内容",
+      "source": "实习僧",
+      "url": "https://www.shixiseng.com/intern/inn_5a8xtvtokndj"
+    },
+    {
+      "company": "得物",
+      "title": "内容传播-内容运营实习",
+      "city": "上海",
+      "salary": "面议",
+      "jd_key": "内容传播",
+      "source": "实习僧",
+      "url": "https://www.shixiseng.com/intern/inn_s2socpyhbvs2"
+    },
+    {
+      "company": "B站",
+      "title": "影视区运营&内容运营实习",
+      "city": "上海",
+      "salary": "面议",
+      "jd_key": "影视区内容运营",
+      "source": "实习僧",
+      "url": "https://www.shixiseng.com/intern/inn_3uthcskesrn2"
+    }
+  ],
+  "jump_doudi_examples": [
+    {
+      "company": "搜狐",
+      "title": "内容运营实习",
+      "city": "北京",
+      "salary": "面议",
+      "jd_key": "老牌内容平台内容运营",
+      "source": "实习僧",
+      "url": "https://www.shixiseng.com/intern/inn_avjb0jpvl2rw"
+    },
+    {
+      "company": "携程",
+      "title": "内容运营实习",
+      "city": "上海",
+      "salary": "面议",
+      "jd_key": "内容+社区（旅拍/社区运营）",
+      "source": "实习僧",
+      "url": "https://www.shixiseng.com/intern/inn_szjgejyxs6xc"
+    },
+    {
+      "company": "美图公司",
+      "title": "AIGC效果实习",
+      "city": "厦门",
+      "salary": "面议",
+      "jd_key": "AIGC 工具向",
+      "source": "实习僧",
+      "url": "https://www.shixiseng.com/intern/inn_sl2cfirw95sp"
+    },
+    {
+      "company": "美团",
+      "title": "美团民宿-内容与社群运营实习",
+      "city": "北京",
+      "salary": "面议",
+      "jd_key": "本地内容运营",
+      "source": "实习僧",
+      "url": "https://www.shixiseng.com/intern/inn_6tgalk396hvg"
+    },
+    {
+      "company": "百度",
+      "title": "AIGC评估运营实习",
+      "city": "北京",
+      "salary": "面议",
+      "jd_key": "AIGC 评估运营",
+      "source": "实习僧",
+      "url": "https://www.shixiseng.com/intern/inn_p209p2skqowm"
+    }
+  ],
+  "salary_bands": {
+    "jump_chong": "150-350元/天（大厂 AI 内容策略岗，JD 含 AIGC/大模型/内容理解/策略）",
+    "jump_wen": "100-200元/天（中厂内容制作/品类运营）",
+    "jump_doudi": "100-150元/天或面议（垂类执行运营）",
+    "note": "来自 2026 年实习僧真实岗位数据统计，非臆造"
+  }
+}
