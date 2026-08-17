@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>多 Agent 求职岗位推荐系统 · 张建鹏</title>
+<style>
+  :root {
+    --bg: #f7f4ef; --card: #ffffff; --ink: #2d2a26; --muted: #8b8378;
+    --accent: #b4532a; --accent-deep: #8f3d1c; --accent-soft: #f7e8dd;
+    --gold: #c9a227; --border: #e8e0d4; --border-soft: #f0eae0;
+    --sh: 0 1px 3px rgba(60,40,20,.05), 0 8px 24px rgba(60,40,20,.06);
+    --sh-hover: 0 2px 6px rgba(60,40,20,.07), 0 16px 40px rgba(60,40,20,.11);
+    --jump-chong: #b4532a; --jump-wen: #b8860b; --jump-doudi: #6b7d5c;
+    --final-chong: #7d5ba6; --final-wen: #3a6ea5; --final-baodi: #2e7d6b;
+    --reject: #b0413e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", -apple-system, sans-serif; background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 20px 24px 64px; }
+
+  /* ---------- 顶部 ---------- */
+  header { text-align: center; padding: 26px 0 8px; }
+  header .logo-row { display: flex; align-items: center; justify-content: center; gap: 12px; }
+  header .logo { width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, var(--accent), var(--gold)); display: flex; align-items: center; justify-content: center; font-size: 22px; color: #fff; box-shadow: var(--sh); }
+  header h1 { font-size: 24px; letter-spacing: 2px; font-weight: 700; color: var(--ink); }
+  header p { color: var(--muted); margin-top: 8px; font-size: 13.5px; letter-spacing: .3px; }
+  .badges { display: flex; gap: 8px; justify-content: center; margin-top: 18px; flex-wrap: wrap; }
+  .badge { background: var(--card); border: 1px solid var(--border); border-radius: 999px; padding: 5px 14px; font-size: 12.5px; color: var(--muted); box-shadow: 0 1px 2px rgba(60,40,20,.04); }
+  .badge b { color: var(--ink); font-weight: 600; }
+  .salary-ref { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin: 18px auto 0; max-width: 760px; background: linear-gradient(135deg, #fdfaf5, #faf3ea); border: 1px solid var(--border); border-radius: 14px; padding: 10px 18px; font-size: 12.5px; color: var(--ink); box-shadow: var(--sh); }
+  .salary-ref span { display: inline-flex; align-items: center; gap: 4px; }
+  .salary-ref b { color: var(--accent-deep); }
+
+  /* ---------- 横向 tabs ---------- */
+  .tabs { display: flex; gap: 4px; margin: 26px 0 16px; border-bottom: 1px solid var(--border); }
+  .tab { padding: 11px 26px; cursor: pointer; font-size: 14.5px; color: var(--muted); border-bottom: 2.5px solid transparent; margin-bottom: -1px; user-select: none; transition: color .2s, border-color .2s; letter-spacing: .5px; }
+  .tab:hover { color: var(--ink); }
+  .tab.active { color: var(--accent-deep); border-bottom-color: var(--accent); font-weight: 600; }
+  .tab .cnt { font-size: 12px; background: var(--accent-soft); color: var(--accent-deep); border-radius: 999px; padding: 1px 9px; margin-left: 7px; font-weight: 500; }
+
+  /* ---------- 搜索与筛选 ---------- */
+  .semantic-bar { display: flex; gap: 10px; margin-bottom: 14px; }
+  .semantic-bar input { flex: 1; padding: 11px 16px; border: 1px solid var(--border); border-radius: 12px; font-size: 14px; background: var(--card); transition: border-color .2s, box-shadow .2s; }
+  .semantic-bar input:focus, .filters select:focus, .filters input:focus, #chat-input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,162,39,.14); }
+  .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; align-items: center; }
+  .filters select, .filters input { padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); color: var(--ink); font-size: 13.5px; transition: border-color .2s; }
+  .filters select:hover { border-color: var(--gold); }
+  .filters .search { flex: 1; min-width: 200px; }
+
+  .btn { background: linear-gradient(135deg, var(--accent), var(--accent-deep)); color: #fff; border: none; border-radius: 10px; padding: 10px 22px; font-size: 14px; cursor: pointer; letter-spacing: .5px; box-shadow: 0 2px 8px rgba(180,83,42,.28); transition: transform .15s, box-shadow .15s; }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(180,83,42,.34); }
+  .btn.secondary { background: #8b8378; box-shadow: none; }
+  .btn.secondary:hover { background: #6f685f; }
+
+  .count-line { color: var(--muted); font-size: 13px; margin-bottom: 12px; letter-spacing: .3px; }
+
+  /* ---------- 岗位卡片 ---------- */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--border-soft); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 9px; box-shadow: var(--sh); transition: transform .18s, box-shadow .18s, border-color .18s; }
+  .card:hover { transform: translateY(-3px); box-shadow: var(--sh-hover); border-color: #ddd2c0; }
+  .card.rejected { border-color: #ecd9d6; background: #fdf9f8; }
+  .card .top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+  .card .company { color: var(--accent-deep); font-weight: 600; font-size: 13px; letter-spacing: .3px; }
+  .card .company .tier-tag { color: var(--muted); font-weight: 400; }
+  .card .title { font-size: 15.5px; font-weight: 600; line-height: 1.4; color: var(--ink); }
+  .card .meta { color: var(--muted); font-size: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .card .jdbrief { color: var(--ink); font-size: 12.8px; line-height: 1.65; background: #faf7f2; border-radius: 10px; padding: 9px 11px; border: 1px solid var(--border-soft); }
+
+  .tier-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .pill { font-size: 11.5px; padding: 3px 12px; border-radius: 999px; font-weight: 600; color: #fff; letter-spacing: .3px; box-shadow: inset 0 -1px 0 rgba(0,0,0,.12); }
+  .pill.jump-chong, .pill.final-chong { background: var(--jump-chong); }
+  .pill.jump-wen, .pill.final-wen { background: var(--jump-wen); }
+  .pill.jump-doudi, .pill.final-baodi { background: var(--jump-doudi); }
+  .pill.reject { background: var(--reject); }
+  .pill.empty { background: #cfc5b8; }
+  .reason { font-size: 12.3px; color: #5c544b; line-height: 1.6; background: linear-gradient(135deg, var(--accent-soft), #fdf6ef); border-radius: 10px; padding: 9px 11px; border-left: 3px solid var(--gold); }
+  .reason.reject-reason { background: #fbeceb; border-left-color: var(--reject); }
+  .link { font-size: 12px; color: var(--accent); text-decoration: none; word-break: break-all; }
+  .link:hover { text-decoration: underline; }
+
+  .empty-state { text-align: center; color: var(--muted); padding: 70px 0; font-size: 14px; }
+
+  /* ---------- 对话窗口 ---------- */
+  .chat-panel { border: 1px solid var(--border); border-radius: 16px; background: var(--card); margin-bottom: 20px; overflow: hidden; box-shadow: var(--sh); }
+  .chat-head { display: flex; align-items: center; gap: 10px; padding: 12px 18px; background: linear-gradient(135deg, #fdfaf5, #f6ece1); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .chat-head .title { font-weight: 700; font-size: 14px; letter-spacing: .5px; }
+  .chat-agent-btn { padding: 5px 14px; border-radius: 999px; border: 1px solid var(--border); background: #fff; cursor: pointer; font-size: 12.5px; color: var(--muted); transition: all .2s; }
+  .chat-agent-btn:hover { border-color: var(--gold); }
+  .chat-agent-btn.active { background: linear-gradient(135deg, var(--accent), var(--accent-deep)); color: #fff; border-color: transparent; box-shadow: 0 2px 8px rgba(180,83,42,.25); }
+  #chat-agent-desc { color: var(--muted); font-size: 12px; margin-left: 6px; flex: 1; min-width: 160px; }
+  #chat-messages { height: 320px; overflow-y: auto; padding: 16px 18px; font-size: 13.5px; line-height: 1.7; background: #fff; scroll-behavior: smooth; }
+  #chat-messages > div { margin: 6px 0; padding: 9px 13px; border-radius: 12px; white-space: pre-wrap; word-break: break-word; max-width: 88%; }
+  #chat-messages .msg-user { background: linear-gradient(135deg, #fdf1e8, #f9e4d4); margin-left: auto; border-top-right-radius: 4px; }
+  #chat-messages .msg-ai { background: #f6f4ef; margin-right: auto; border-top-left-radius: 4px; }
+  #chat-messages .msg-sys { color: var(--muted); font-size: 12px; text-align: center; max-width: 100%; background: transparent; padding: 4px; }
+  .chat-input-row { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); background: #fdfaf6; }
+  #chat-input { flex: 1; padding: 10px 15px; border: 1px solid var(--border); border-radius: 12px; font-size: 13.5px; background: #fff; transition: border-color .2s, box-shadow .2s; }
+
+  footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 48px; letter-spacing: .3px; }
+
+  /* ---------- 岗位详情抽屉 ---------- */
+  .drawer-overlay { position: fixed; inset: 0; background: rgba(45,42,38,.4); opacity: 0; visibility: hidden; transition: opacity .25s, visibility .25s; z-index: 90; }
+  .drawer-overlay.open { opacity: 1; visibility: visible; }
+  .drawer { position: fixed; top: 0; right: 0; height: 100%; width: 480px; max-width: 92vw; background: var(--card); box-shadow: -12px 0 40px rgba(45,42,38,.16); transform: translateX(105%); transition: transform .3s cubic-bezier(.22,.61,.36,1); z-index: 100; display: flex; flex-direction: column; }
+  .drawer.open { transform: translateX(0); }
+  .drawer-head { padding: 18px 22px; background: linear-gradient(135deg, #fdfaf5, #f6ece1); border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 10px; }
+  .drawer-head .d-title { font-size: 17px; font-weight: 700; line-height: 1.4; flex: 1; }
+  .drawer-close { background: none; border: none; font-size: 20px; color: var(--muted); cursor: pointer; padding: 2px 6px; border-radius: 8px; }
+  .drawer-close:hover { background: var(--accent-soft); color: var(--ink); }
+  .drawer-body { flex: 1; overflow-y: auto; padding: 18px 22px; }
+  .d-section { margin-bottom: 16px; }
+  .d-section h4 { font-size: 12px; color: var(--muted); letter-spacing: 1px; margin-bottom: 6px; text-transform: uppercase; }
+  .d-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .d-meta span { background: #faf7f2; border: 1px solid var(--border-soft); border-radius: 8px; padding: 4px 10px; font-size: 12.5px; color: var(--ink); }
+  .d-meta span b { color: var(--muted); font-weight: 400; margin-right: 3px; }
+  .d-reason { background: linear-gradient(135deg, var(--accent-soft), #fdf6ef); border-left: 3px solid var(--gold); border-radius: 10px; padding: 11px 13px; font-size: 13px; line-height: 1.65; color: #5c544b; }
+  .d-reason.reject { background: #fbeceb; border-left-color: var(--reject); }
+  .d-jd { font-size: 13px; line-height: 1.75; color: var(--ink); white-space: pre-wrap; background: #faf7f2; border: 1px solid var(--border-soft); border-radius: 10px; padding: 12px 14px; max-height: 320px; overflow-y: auto; }
+  .d-jd .empty-hint { color: var(--muted); font-style: italic; }
+  .d-tiers { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .drawer-foot { padding: 14px 22px; border-top: 1px solid var(--border); background: #fdfaf6; display: flex; gap: 10px; }
+  .drawer-foot .btn { flex: 1; }
+  @media (max-width: 720px) { .drawer { width: 100%; } }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #d8cfc2; border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: #c4b8a8; }
+  @media (max-width: 720px) { .cards { grid-template-columns: 1fr; } header h1 { font-size: 20px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo-row">
+      <div class="logo">🎯</div>
+      <h1>AI 求职推荐系统</h1>
+    </div>
+    <p>数据 Agent（查库·抗幻觉）→ 推理 Agent（分档·推荐）→ 安全层（幻觉校验）｜ 本地运行 · 每周一自动更新</p>
+    <div class="badges" id="badges"></div>
+  <div class="salary-ref">
+    <span>💰 <b>优选档</b> 大厂 AI 内容策略 · 150-350元/天</span>
+    <span>💰 <b>稳健档</b> 中厂内容制作 · 100-200元/天</span>
+    <span>💰 <b>保底档</b> 垂类执行运营 · 100-150元/天</span>
+    <span style="color:var(--muted)">依据：2026 年真实在招岗位（config/cases.json 证据库）</span>
+  </div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="jump">实习期（现在→2027.03）</div>
+    <div class="tab" data-tab="final">冲刺期（2027.03→毕业）</div>
+    <div class="tab" data-tab="rejected">抗拒 / 人工过目</div>
+  </div>
+
+  <div class="semantic-bar">
+    <input id="semantic-input" placeholder="语义搜索：例如「AI 内容策划实习」「大模型产品经理」…">
+    <button class="btn" onclick="semanticSearch()">语义搜索</button>
+    <button class="btn" style="background:#8a7a68" onclick="loadAll()">全量列表</button>
+  </div>
+
+  <!-- AI 对话窗口（双 Agent：数据库 AI / 推理 AI） -->
+  <div class="chat-panel">
+    <div class="chat-head">
+      <span class="title">💬 AI 求职助手</span>
+      <div id="chat-agent-switch" style="display:flex;gap:6px">
+        <button class="chat-agent-btn" data-agent="database">🗄️ 数据库 AI</button>
+        <button class="chat-agent-btn active" data-agent="reasoning">🧠 推理 AI</button>
+      </div>
+      <span id="chat-agent-desc"></span>
+    </div>
+    <div id="chat-messages">
+      <div class="msg-sys">👋 和 AI 聊聊你的求职方向。<br>推理 AI：问方向/匹配度/简历建议；数据库 AI：更新数据/查库/改规则</div>
+    </div>
+    <div class="chat-input-row">
+      <input id="chat-input" placeholder="输入消息…（Enter 发送）">
+      <button class="btn" onclick="sendChat()">发送</button>
+    </div>
+  </div>
+
+  <div class="filters">
+    <select id="f-tier"></select>
+    <select id="f-company"></select>
+    <select id="f-subcat"></select>
+    <select id="f-type"></select>
+    <input id="f-keyword" class="search" placeholder="关键词过滤（岗位名/公司）…">
+    <button class="btn" onclick="applyFilter()">筛选</button>
+  </div>
+
+  <div class="count-line" id="count-line"></div>
+  <div class="cards" id="cards"></div>
+  <div class="empty-state" id="empty" style="display:none">没有匹配的岗位</div>
+
+  <footer>数据源：求职雷达 + 腾讯/实习僧/国聘网爬虫（1869 条有效）｜ 分档规则：config/profile.json（可编辑）｜ 推理输出经安全层校验</footer>
+</div>
+
+<!-- 岗位详情抽屉 -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div class="d-title" id="d-title"></div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body" id="d-body"></div>
+  <div class="drawer-foot">
+    <button class="btn secondary" onclick="closeDrawer()">关闭</button>
+    <button class="btn" id="d-apply" onclick="openApply()">前往投递 →</button>
+  </div>
+</div>
+
+<script>
+let DATA = null;
+let currentTab = "jump";
+let currentFilter = { tier: "", company: "", subcat: "", type: "", keyword: "" };
+
+function $(id) { return document.getElementById(id); }
+
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  return r.json();
+}
+
+async function loadAll() {
+  DATA = await fetchJSON("/api/results");
+  renderBadges();
+  renderFilters();
+  applyFilter();
+}
+
+function renderBadges() {
+  const s = DATA.stats || {};
+  const items = [
+    `岗位总数 ${s.total ?? "-"}`,
+    `推荐 ${s.recommended ?? "-"}`,
+    `人工过目 ${s.rejected ?? "-"}`,
+    `优选 ${s.by_tierJump?.["实习·优选"] ?? 0}`,
+    `稳健 ${s.by_tierJump?.["实习·稳健"] ?? 0}`,
+    `冲刺档 ${s.by_tierFinal?.["冲刺档"] ?? 0}`,
+    `稳定档 ${s.by_tierFinal?.["稳定档"] ?? 0}`,
+    `保底档 ${s.by_tierFinal?.["保底档"] ?? 0}`,
+  ];
+  $("badges").innerHTML = items.map(t => `<span class="badge">${t}</span>`).join("");
+}
+
+function renderFilters() {
+  const stats = DATA.stats || {};
+  const recs = [...(DATA.recommendations || []), ...(DATA.rejected || [])];
+  const companies = [...new Set(recs.map(r => r.company))].sort();
+  const subcats = [...new Set(recs.map(r => r.subCat))].sort();
+  const types = [...new Set(recs.map(r => r.jobType))].sort();
+
+  const tierOpts = [
+    ['', '全部档位'],
+    ['实习·优选', '实习·优选'], ['实习·稳健', '实习·稳健'], ['实习·保底', '实习·保底'],
+    ['冲刺档', '冲刺档'], ['稳定档', '稳定档'], ['保底档', '保底档'],
+  ];
+  $("f-tier").innerHTML = tierOpts.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
+  $("f-company").innerHTML = '<option value="">全部公司</option>' + companies.map(c => `<option>${c}</option>`).join("");
+  $("f-subcat").innerHTML = '<option value="">全部方向</option>' + subcats.map(c => `<option>${c}</option>`).join("");
+  $("f-type").innerHTML = '<option value="">全部类型</option>' + types.map(t => `<option>${t}</option>`).join("");
+}
+
+function tierPills(r) {
+  const pills = [];
+  if (r.tierJump) pills.push(`<span class="pill jump-${tierClass(r.tierJump)}">${r.tierJump}</span>`);
+  if (r.tierFinal) pills.push(`<span class="pill final-${tierClass(r.tierFinal)}">${r.tierFinal}</span>`);
+  if (r.rejectFlags && r.rejectFlags.length) pills.push(`<span class="pill reject">${r.rejectFlags.join('+')}</span>`);
+  return pills.join("");
+}
+function tierClass(t) {
+  if (t === "实习·优选") return "chong";
+  if (t === "实习·稳健") return "wen";
+  if (t === "实习·保底") return "doudi";
+  if (t === "冲刺档") return "chong";
+  if (t === "稳定档") return "wen";
+  if (t === "保底档") return "baodi";
+  return "empty";
+}
+
+function cardHTML(r) {
+  const isReject = r.rejectReason || (r.rejectFlags && r.rejectFlags.length);
+  const reason = r.recommendReason
+    ? `<div class="reason">💡 ${r.recommendReason}</div>`
+    : (r.rejectReason ? `<div class="reason reject-reason">🚫 ${r.rejectReason}</div>` : "");
+  return `<div class="card ${isReject ? 'rejected' : ''}" data-id="${r.id}" onclick="openDrawer('${r.id}')" style="cursor:pointer">
+    <div class="top">
+      <span class="company">${r.company} · <span class="tier-tag">${r.companyTier}</span></span>
+      <span class="meta">${r.subCat} · ${r.jobType}</span>
+    </div>
+    <div class="title">${r.title}</div>
+    <div class="tier-row">${tierPills(r)}</div>
+    <div class="meta">📍 ${r.location || '未知'} ｜ 💰 ${r.salary || '面议'}</div>
+    <div class="jdbrief">${r.jdBrief || ''}</div>
+    ${reason}
+  </div>`;
+}
+
+function matchesFilter(r) {
+  const f = currentFilter;
+  if (f.tier && r.tierJump !== f.tier && r.tierFinal !== f.tier) return false;
+  if (f.company && r.company !== f.company) return false;
+  if (f.subcat && r.subCat !== f.subcat) return false;
+  if (f.type && r.jobType !== f.type) return false;
+  if (f.keyword && !(r.title + r.company + (r.jdBrief || "")).includes(f.keyword)) return false;
+  return true;
+}
+
+function applyFilter() {
+  currentFilter = {
+    tier: $("f-tier").value, company: $("f-company").value,
+    subcat: $("f-subcat").value, type: $("f-type").value,
+    keyword: $("f-keyword").value.trim(),
+  };
+  if (!DATA) return;
+  let list;
+  if (currentTab === "rejected") {
+    list = (DATA.rejected || []).filter(matchesFilter);
+  } else if (currentTab === "jump") {
+    list = (DATA.recommendations || []).filter(r => r.tierJump).filter(matchesFilter);
+  } else {
+    list = (DATA.recommendations || []).filter(r => r.tierFinal).filter(matchesFilter);
+  }
+  $("count-line").textContent = `共 ${list.length} 个岗位`;
+  $("cards").innerHTML = list.map(cardHTML).join("");
+  $("empty").style.display = list.length ? "none" : "block";
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
+  applyFilter();
+}
+
+async function semanticSearch() {
+  const q = $("semantic-input").value.trim();
+  if (!q) return;
+  const r = await fetchJSON(`/api/semantic?query=${encodeURIComponent(q)}&limit=30`);
+  $("count-line").textContent = `【语义搜索】${r.note}｜安全层: ${r.safety?.status}`;
+  const cards = [...(r.recommendations || []), ...(r.rejected || [])].map(x => cardHTML(x.job ? x : x));
+  $("cards").innerHTML = cards.join("");
+  $("empty").style.display = cards.length ? "none" : "block";
+}
+
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => switchTab(t.dataset.tab)));
+["f-tier", "f-company", "f-subcat", "f-type"].forEach(id => $(id).addEventListener("change", applyFilter));
+$("f-keyword").addEventListener("input", applyFilter);
+
+// ===== AI 对话窗口（双 Agent，参考 Reasonix 单页 SSE 流式实现） =====
+let chatAgent = "reasoning";
+let chatHistory = [];          // [{role, content}]
+const AGENT_DESC = {
+  database: "管理岗位数据库：更新数据 / 改规则 / 查库统计 / 重建索引。只接受数据库相关指令。",
+  reasoning: "个人求职咨询：结合你的画像与真实岗位给出三档推荐、匹配度与简历建议。",
+};
+
+function initChat() {
+  // 双 AI 切换
+  document.querySelectorAll(".chat-agent-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      chatAgent = btn.dataset.agent;
+      document.querySelectorAll(".chat-agent-btn").forEach(b => b.classList.toggle("active", b === btn));
+      $("chat-agent-desc").textContent = AGENT_DESC[chatAgent] || "";
+      // 切换后给个系统提示
+      const hint = chatAgent === "reasoning"
+        ? "🧠 推理 AI 就绪：可以问「我适合投哪些方向」「这个岗位匹配吗」「帮我规划实习期」"
+        : "🗄️ 数据库 AI 就绪：可以发「更新岗位数据」「查库统计」「重建向量库」";
+      appendChat("system", hint);
+    });
+  });
+  $("chat-agent-desc").textContent = AGENT_DESC[chatAgent];
+  // Enter 发送
+  $("chat-input").addEventListener("keydown", e => { if (e.key === "Enter") sendChat(); });
+}
+
+function appendChat(role, text) {
+  const box = $("chat-messages");
+  const empty = box.querySelector(".msg-sys");
+  if (empty) empty.remove();
+  const div = document.createElement("div");
+  if (role === "user") {
+    div.className = "msg-user";
+    div.textContent = text;
+  } else if (role === "system") {
+    div.className = "msg-sys";
+    div.textContent = "· " + text;
+  } else {
+    div.className = "msg-ai";
+    div.textContent = text;
+  }
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+  return div;
+}
+
+async function sendChat() {
+  const input = $("chat-input");
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = "";
+  appendChat("user", text);
+  chatHistory.push({ role: "user", content: text });
+
+  const aiEl = appendChat("assistant", "…");
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ agent: chatAgent, messages: chatHistory }),
+  });
+  if (!res.ok) { aiEl.textContent = `请求失败: ${res.status}`; return; }
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "", full = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split("\n");
+    buf = lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      const data = line.slice(6);
+      if (data === "[DONE]") continue;
+      try {
+        const chunk = JSON.parse(data);
+        if (chunk.content) { full += chunk.content; aiEl.textContent = full; }
+      } catch (e) {}
+    }
+  }
+  chatHistory.push({ role: "assistant", content: full || "（无回复）" });
+}
+
+initChat();
+loadAll();
+
+// ===== 岗位详情抽屉 =====
+let drawerJob = null;
+
+function findJobById(id) {
+  if (!DATA) return null;
+  return [...(DATA.recommendations || []), ...(DATA.rejected || [])].find(r => r.id === id) || null;
+}
+
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function openDrawer(id) {
+  const job = findJobById(id);
+  if (!job) return;
+  drawerJob = job;
+  $("d-title").textContent = job.title || "";
+  const meta = [
+    ["公司", job.company], ["方向", job.subCat], ["类型", job.jobType],
+    ["地点", job.location], ["薪资", job.salary], ["学历", job.education || "不限"],
+    ["发布时间", (job.publishDate || "").slice(0, 10)],
+  ].filter(x => x[1]).map(x => `<span><b>${x[0]}</b>${esc(x[1])}</span>`).join("");
+
+  const tiers = tierPills(job);
+
+  const reason = job.recommendReason
+    ? `<div class="d-section"><h4>推荐理由</h4><div class="d-reason">${esc(job.recommendReason)}</div></div>`
+    : (job.rejectReason ? `<div class="d-section"><h4>判定说明</h4><div class="d-reason reject">${esc(job.rejectReason)}</div></div>` : "");
+
+  const jd = (job.jdFull && job.jdFull.length > 30)
+    ? esc(job.jdFull)
+    : (job.jdBrief ? esc(job.jdBrief) + "\n\n（未获取 JD 原文，以上为岗位摘要）" : '<span class="empty-hint">暂无 JD 描述</span>');
+
+  const req = job.requirements
+    ? `<div class="d-section"><h4>任职要求</h4><div class="d-jd">${esc(job.requirements)}</div></div>`
+    : "";
+
+  $("d-body").innerHTML = `
+    <div class="d-meta">${meta}</div>
+    <div class="d-tiers">${tiers}</div>
+    ${reason}
+    ${req}
+    <div class="d-section"><h4>岗位职责</h4><div class="d-jd">${jd}</div></div>`;
+  $("d-apply").style.display = job.url ? "" : "none";
+  $("drawer-overlay").classList.add("open");
+  $("drawer").classList.add("open");
+}
+
+function closeDrawer() {
+  $("drawer-overlay").classList.remove("open");
+  $("drawer").classList.remove("open");
+  drawerJob = null;
+}
+
+function openApply() {
+  if (drawerJob && drawerJob.url) {
+    window.open(drawerJob.url, "_blank");
+  }
+}
+
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
+</script>
+</body>
+</html>
