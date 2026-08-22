@@ -1,105 +1,98 @@
-# 多 Agent 求职岗位推荐系统
+# AI 求职工作台（公开技术快照）
 
-本地运行的多 Agent 岗位推荐系统：**数据 Agent**（查库·抗幻觉）→ **推理 Agent**（分档·推荐）→ **安全层**（幻觉校验），前端展示分档推荐结果 + **双 AI 对话窗口**（数据库 AI / 推理 AI）。
+一个本地运行的多 Agent 求职决策原型：把分散岗位先整理成可查询数据，再由规则推理完成分档，最后通过安全层检查推荐结果是否来自真实岗位记录。
+
+> 这个仓库保留的是早期技术快照，用于展示数据、推理与安全校验如何分层。最新个性化 V1 仍在本地迭代，尚未把未完成的网申助手和用户资料管理功能包装成公开成品。
+
+## 为什么做
+
+岗位越多并不等于决策越容易。这个原型优先解决三个问题：
+
+- **信息口径不一：** 先清洗、去重和统一字段，再讨论推荐。
+- **推荐理由不透明：** 数据 Agent 只返回事实，推理 Agent 只基于这些事实分档。
+- **AI 容易说得像真的：** 安全层检查输出中的岗位 ID 是否确实来自本次查询。
+
+## 当前可以验证什么
+
+- `data/jobs_clean.json`：1,869 条统一结构的岗位数据。
+- `config/profile.json`：个人约束、分档矩阵和人工复核规则，可直接修改。
+- `agents/` + `orchestrator.py`：数据查询、规则推理、安全校验三层流程。
+- `ui/`：本地 FastAPI 看板和可选的 DeepSeek 对话入口。
+- `tests/test_pipeline.py`：10 个测试函数；其中 9 项可离线运行，1 项需要用户自行配置 DeepSeek API Key。
+
+2026-08-22 本地离线验证结果：`9 passed, 1 deselected`。仓库暂未配置 CI，因此这里不使用“持续 10/10 通过”之类无法公开复核的表述。
 
 ## 架构
 
-```
-前端展示层（本地 Web UI：FastAPI + 单页 HTML + 双 AI 对话窗口）
+```text
+本地 Web UI（FastAPI）
         │
-编排层 Orchestrator（LangGraph 图）
-  START → data_agent → reasoning_agent → safety → END
+LangGraph Orchestrator
+START → Data Agent → Reasoning Agent → Safety → END
+        │               │               │
+查询/过滤/统计       规则分档与理由      事实 ID 校验
+只返回数据库事实     不自行补造岗位      异常进入人工复核
         │
-数据 Agent（agents/data_agent.py）       推理 Agent（agents/reasoning_agent.py）
-  · 查库/过滤/统计，只输出数据库事实       · 按画像+抗拒规则+三档定义分档
-  · 硬约束：无数据不编造                  · 硬约束：不查库、只基于数据Agent返回的事实
-  · 结构化查询 + ChromaDB 语义召回        · 分档=确定性规则，理由=画像↔JD匹配+真实案例佐证
-        │
-爬虫（crawlers/）：腾讯官方 API / 实习僧(字体反爬破解) / 国聘网(央国企)  每周一自动更新
-数据源：data/jobs_clean.json（1869 条，统一 schema）
-配置：  config/profile.json（画像/抗拒规则/三档矩阵/央国企白名单）+ config/cases.json（真实案例证据库）
-对话：  ui/app.py /api/chat（SSE 流式 DeepSeek）+ skills/job-hunting/SKILL.md（求职 skill）
+结构化岗位数据 + 可选 ChromaDB 语义检索
 ```
 
-## 目录
+这个版本中的岗位分档主要由确定性规则完成；DeepSeek 用于可选对话，不决定基础推荐结果。
 
-| 路径 | 说明 |
-|---|---|
-| `config/profile.json` | 画像、抗拒规则、三档定义、公司分级、央国企白名单（**可直接编辑**） |
-| `config/cases.json` | 三档真实案例证据库（2026 年在招 + 薪资，推荐理由佐证） |
-| `agents/data_agent.py` | 数据 Agent（交付物 1） |
-| `agents/reasoning_agent.py` | 推理 Agent（交付物 2） |
-| `orchestrator.py` | LangGraph 编排层 + 安全层（交付物 3） |
-| `crawlers/` | 爬虫（腾讯 API / 实习僧字体反爬 / 国聘网央国企） |
-| `rag/` | ChromaDB 向量检索层（ingest/retriever/embeddings，bge-small-zh） |
-| `data/jobs_clean.json` | 清洗后的统一 schema 岗位数据（交付物 5） |
-| `data/results_full.json` | 全量分档结果（前端数据源） |
-| `ui/` | 前端看板 + 双 AI 对话窗口（交付物 6） |
-| `skills/job-hunting/SKILL.md` | 求职推理 skill（内嵌张建鹏画像，推理 AI 使用） |
-| `tests/test_pipeline.py` | 测试（10 项，交付物 8） |
-| `scripts/` | clean_jobs / build_results / update_all（统一流水线） |
+## 快速体验
 
-## 快速启动
+建议使用 Python 3.11，并在虚拟环境中运行：
 
 ```bash
-# 1. 安装依赖
+python -m venv .venv
+
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+
 pip install -r requirements.txt
-
-# 2. 一键启动（自动清洗数据 + 生成全量分档 + 启动 UI）
 python main.py
-
-# 打开浏览器访问 http://127.0.0.1:8000
 ```
 
-首次运行会下载 bge-small-zh embedding 模型（约 100MB，用于语义搜索；纯规则查询不依赖它）。
+打开 `http://127.0.0.1:8000`。
 
-## 可选步骤
+首次使用语义搜索时会下载 embedding 模型；只运行规则查询与离线测试不需要配置 DeepSeek API Key。
+
+## 测试
 
 ```bash
-# 重建向量库（数据清洗后需要）
-python -m rag.ingest --force
+# 推荐：运行 9 项无需外部 API 的测试
+python -m pytest tests/test_pipeline.py -k "not test_llm_client_api" -q
 
-# 命令行测试（10 项，对应规格书验收 + 新需求）
-python tests/test_pipeline.py        # 或 pytest tests/test_pipeline.py -v
-
-# 手动更新数据（每周一 08:00 自动执行，计划任务 JobRecommendationWeeklyUpdate）
-python scripts/update_all.py
-
-# AI 对话窗口（页面内）：
-#   🧠 推理 AI：问方向/匹配度/简历建议（加载求职 skill）
-#   🗄️ 数据库 AI：更新数据/查库/改规则（需先安装 playwright: pip install playwright && python -m playwright install chromium）
-
-# 编排层命令行演示
-python orchestrator.py
+# 配置 DEEPSEEK_API_KEY 后，才运行完整测试
+python -m pytest tests/test_pipeline.py -q
 ```
 
-## 三档定义（config/profile.json 可调）
+测试覆盖销售岗过滤、AI 内容岗分档、海外岗人工复核、数据 Agent 抗幻觉、推荐事实校验、结果文件一致性和案例证据等路径。
 
-- **实习期**（现在→2027.03）：实习·优选（大厂 AI 内容向实习）/ 实习·稳健（中厂内容/产品内容实习）/ 实习·保底（腰部公司，当前数据源暂无）
-- **冲刺期**（2027.03→毕业）：冲刺档（大厂产品内容向）/ 稳定档（大厂或中厂内容/产品内容）/ 保底档（中厂方向匹配）
-- 同一岗位双标：如字节 AI 策略岗，实习期=实习·优选，冲刺期=冲刺档
+## 主要目录
 
-## 抗拒规则
+| 路径 | 作用 |
+|---|---|
+| `config/profile.json` | 画像约束、分档定义、公司分级、人工复核规则 |
+| `config/cases.json` | 推荐理由使用的案例证据 |
+| `agents/data_agent.py` | 岗位查询与数据库事实输出 |
+| `agents/reasoning_agent.py` | 确定性分档和推荐理由 |
+| `orchestrator.py` | LangGraph 编排与安全层 |
+| `rag/` | ChromaDB 语义检索（可选） |
+| `data/jobs_clean.json` | 清洗后的岗位数据快照 |
+| `ui/` | FastAPI 看板与对话入口 |
+| `tests/test_pipeline.py` | 端到端规则测试 |
 
-- ❌ 纯销售岗（title 命中销售强词，如商务拓展/广告销售/KA销售）→ 自动标红
-- ❌ 纯技术岗（研发/算法/后端等，title 无产品/内容/管理信号词）→ 自动标红
-- ⚠️ 海外/外语向岗位（TikTok/海外/国际/英语/日语等）→ 直接筛选掉，归人工过目
-- ⚠️ 打标存疑岗（title 主体含行业信号词但 subCat 是核心方向，如"电商运营"被标内容运营）→ 归人工过目
-- ⚠️ 其余岗位全部列出，由用户人工过目（不做自动拒绝）
+## 已知限制
 
-> 以上规则全部在 `config/profile.json` 的 `reject_rules` 中，可编辑。
+1. 岗位数据是 2026-08 快照，具体招聘状态必须回到招聘官网确认。
+2. 数据源对央国企、湖北本地和腰部公司的覆盖仍不完整。
+3. 个人规则目前写在配置文件中，还不是面向任意用户的成熟资料管理产品。
+4. 推荐理由主要是规则模板，真实帮助程度还需要更多用户任务验证。
+5. 语义检索首次需要下载本地模型；未构建向量库时会降级为关键词查询。
+6. 对话能力依赖用户自己的 API Key；`.env` 已被 Git 忽略，不应提交密钥。
 
-## 数据说明
+## 下一步产品方向
 
-- 源数据：`assets/job-aggregation-site/data/jobs.json`（2316 条，求职雷达前身）
-- 清洗规则：排除社招（24）/ 已下线（41）/ qualityScore=0（19）/ 重复 id（107）→ 2125 条
-- 修复的数据错误：小红书等公司 95 条"实习生"岗被源数据标为"校招"，已按 title 含"实习"标准化为实习
-- 全量分档：1869 条 → 推荐 940（实习·优选 693 / 实习·稳健 182；冲刺档 178 / 稳定档 525 / 保底档 237）、人工过目 929
-
-## 遗留风险
-
-1. **数据源无央国企/腰部公司（实习·保底档部分）**：湖北本省央国企岗位较少，UI 相应档位可能为空（需扩充爬虫数据源）
-2. **subCat 依赖前身打标**：约 15 条空缺由规则补全；个别岗位 subCat 可能不精确（如电商运营岗被标为内容运营），推理基于 subCat 判定，人工过目可兜底
-3. **推荐理由为规则模板**：基于画像能力关键词↔JD 重叠，未接入 DeepSeek 润色（如需要可在 `agents/reasoning_agent.py` 的 `_reason()` 处接入 LLM）
-4. **语义搜索依赖本地模型**：首次需下载 bge-small-zh；向量库未构建时自动降级为关键词查询
-5. **已下线岗位已排除**：数据是 2026-08 快照，岗位时效以 `publishDate` 为准，建议定期用前身爬虫更新
+- 将简历与详细经历整理为用户可维护的本地资料包，而不是把某个人的画像写死。
+- 让每条推荐展示来源、约束命中和待确认信息，保留人的最终判断权。
+- 用小范围任务测试验证“节省了多少时间、减少了多少遗漏”，再决定是否扩大上线。

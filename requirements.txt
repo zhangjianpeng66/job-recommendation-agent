@@ -1,0 +1,11 @@
+langgraph
+chromadb
+sentence-transformers
+fastapi
+uvicorn
+httpx
+pytest
+playwright
+fonttools
+openpyxl
+pillow
